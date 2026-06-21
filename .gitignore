@@ -1,0 +1,30 @@
+# EEG raw and processed data
+*.gdf
+*.mat
+*.set
+*.fdt
+
+# MATLAB temporary/autosave files
+*.asv
+*.m~
+*.mlx.autosave
+
+# MATLAB generated folders
+slprj/
+codegen/
+
+# External toolboxes
+matlab/toolboxes/
+
+# Local data folders
+matlab/data/raw/
+matlab/data/processed/
+matlab/data/external/
+
+# Results that may become heavy
+assignments/*/results/*.mat
+matlab/labs/**/results/*.mat
+
+# OS files
+.DS_Store
+Thumbs.db
