@@ -15,6 +15,8 @@ codegen/
 
 # External toolboxes
 matlab/toolboxes/
+matlab/toolboxes/biosig
+matlab/toolboxes/eeglab
 
 # Local data folders
 matlab/data/raw/
