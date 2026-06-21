@@ -104,6 +104,24 @@ Run the second script:
 run('labs/lab02_gdf/lab02_02_create_label_vectors.m')
 ```
 
+## Results
+
+### EEG visualization
+
+The first script plots a 5-second segment from one EEG channel.
+
+![Single EEG channel](images/lab02_single_channel_5s.png)
+
+It also plots three EEG channels over the same 5-second interval using the same amplitude scale.
+
+![Three EEG channels](images/lab02_three_channels_5s.png)
+
+### Label vectors
+
+The second script creates and plots the sample-wise label vectors.
+
+![Label vectors](images/lab02_label_vectors.png)
+
 ## Notes
 
 The loaded signal has the structure:
