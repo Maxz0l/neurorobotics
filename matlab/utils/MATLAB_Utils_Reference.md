@@ -2,7 +2,7 @@
 
 Neurorobotics 2025/2026
 
-Last updated: after Lab05 - Spatial filters on logarithmic band power
+Last updated: after Lab06 - ERD/ERS on band power
 
 ## Purpose of this folder
 
@@ -20,7 +20,8 @@ matlab/utils/
 ├── concat_gdf_runs.m
 ├── create_label_vectors.m
 ├── extract_trials.m
-├── compute_log_bandpower.m
+├── compute_bandpower.m        # general band power, optional log
+├── compute_log_bandpower.m    # backward-compatible wrapper (ApplyLog = true)
 ├── apply_car_filter.m
 └── apply_laplacian_filter.m
 ```
@@ -190,16 +191,19 @@ This is acceptable for the current labs, but later analyses may require stricter
 
 ---
 
-# 5. compute_log_bandpower.m
+# 5. compute_bandpower.m
 
 ## Purpose
 
-Computes logarithmic band power for a selected frequency band.
+Computes band power for a selected frequency band. By default the result is log-transformed, but the log step can be disabled through the `ApplyLog` option.
+
+The log is disabled for ERD/ERS (Lab06): there the data is normalized by the reference period instead, so a logarithmic transform must not be applied beforehand.
 
 ## Function call
 
 ```matlab
-[logPower, filteredSignal] = compute_log_bandpower(S, sampleRate, frequencyBand);
+[bandPower, filteredData, cfg] = compute_bandpower(S, sampleRate, frequencyBand);
+[bandPower, filteredData, cfg] = compute_bandpower(S, sampleRate, frequencyBand, 'ApplyLog', false);
 ```
 
 ## Inputs
@@ -210,12 +214,22 @@ Computes logarithmic band power for a selected frequency band.
 | `sampleRate` | Sampling rate in Hz |
 | `frequencyBand` | Frequency band `[low high]`, for example `[8 12]` |
 
+## Optional name-value arguments
+
+| Name | Default | Description |
+|---|---|---|
+| `FilterOrder` | `4` | Butterworth filter order |
+| `MovingWindowSec` | `1` | Moving-average window in seconds |
+| `Epsilon` | `eps` | Constant added before the log to avoid `log(0)` |
+| `ApplyLog` | `true` | Apply the logarithmic transform |
+
 ## Outputs
 
 | Output | Description |
 |---|---|
-| `logPower` | Logarithmic band power `[samples x channels]` |
-| `filteredSignal` | Band-pass filtered EEG signal `[samples x channels]` |
+| `bandPower` | Band power, log-transformed if `ApplyLog = true` `[samples x channels]` |
+| `filteredData` | Band-pass filtered EEG signal `[samples x channels]` |
+| `cfg` | Configuration structure (parameters and filter coefficients) |
 
 ## Processing pipeline
 
@@ -224,7 +238,42 @@ band-pass Butterworth filtering
 -> zero-phase filtering with filtfilt
 -> signal rectification by squaring
 -> moving average with a 1-second window
--> logarithmic transform
+-> optional logarithmic transform (ApplyLog)
+```
+
+## Used by
+
+```text
+Lab04 - MI BMI logarithmic band power      (ApplyLog = true)
+Lab05 - Spatial filters on log band power  (ApplyLog = true)
+Lab06 - ERD/ERS on band power              (ApplyLog = false)
+```
+
+## Future use
+
+```text
+Lab07 - ERD/ERS on spectrogram
+Assignment 1
+```
+
+---
+
+# 5b. compute_log_bandpower.m
+
+## Purpose
+
+Backward-compatible wrapper kept so that the Lab04 and Lab05 scripts keep working without modification. It simply calls `compute_bandpower()` with `ApplyLog = true`.
+
+## Function call
+
+```matlab
+[logPower, filteredSignal] = compute_log_bandpower(S, sampleRate, frequencyBand);
+```
+
+This is equivalent to:
+
+```matlab
+[logPower, filteredSignal] = compute_bandpower(S, sampleRate, frequencyBand, 'ApplyLog', true);
 ```
 
 ## Used by
@@ -232,15 +281,6 @@ band-pass Butterworth filtering
 ```text
 Lab04 - MI BMI logarithmic band power
 Lab05 - Spatial filters on logarithmic band power
-```
-
-## Future use
-
-This function will be reused in:
-
-```text
-Lab06 - ERD/ERS on logarithmic band power
-Assignment 1
 ```
 
 ---
@@ -340,6 +380,7 @@ The trigger channel must not be included. If the input has 17 columns, the multi
 
 ```text
 Lab05 - Spatial filters on logarithmic band power
+Lab06 - ERD/ERS on band power
 ```
 
 ## Future use
@@ -347,7 +388,6 @@ Lab05 - Spatial filters on logarithmic band power
 The Laplacian filter is likely to be useful in:
 
 ```text
-Lab06 - ERD/ERS on logarithmic band power
 Lab07 - ERD/ERS on spectrogram
 Lab08 - Feature selection and classification
 Lab09 - Classification and control framework
@@ -356,7 +396,7 @@ Assignment 1
 
 ---
 
-# Current pipeline after Lab05
+# Current pipeline after Lab06
 
 The reusable pipeline is now:
 
@@ -369,9 +409,12 @@ load GDF file
    -> none
    -> CAR
    -> Laplacian
--> compute logarithmic band power
--> extract trials
+-> compute band power
+   -> log for features (Lab04, Lab05)
+   -> no log for ERD/ERS (Lab06)
+-> extract trials and the fixation reference period
 -> average or compare motor imagery classes
+-> compute ERD/ERS relative to the fixation reference (Lab06)
 ```
 
 ## Git notes
@@ -398,7 +441,6 @@ light figures
 The next labs will build on this structure:
 
 ```text
-Lab06 - ERD/ERS on logarithmic band power
 Lab07 - ERD/ERS on spectrogram
 Lab08 - Feature selection and classification
 Lab09 - Classification and control framework
