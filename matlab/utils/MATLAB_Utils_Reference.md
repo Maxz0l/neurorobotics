@@ -2,7 +2,7 @@
 
 Neurorobotics 2025/2026
 
-Last updated: after Lab07 - ERD/ERS on spectrogram
+Last updated: after Lab08 - Feature selection and classification
 
 ## Purpose of this folder
 
@@ -25,6 +25,7 @@ matlab/utils/
 ├── compute_log_bandpower.m    # backward-compatible wrapper (ApplyLog = true)
 ├── apply_car_filter.m
 ├── apply_laplacian_filter.m
+├── compute_fisher_score.m     # two-class feature discriminability
 │
 │   # provided by the course (Moodle), NOT student-authored:
 ├── proc_spectrogram.m         # PSD over time (spectrogram)
@@ -400,13 +401,59 @@ Assignment 1
 
 ---
 
+# 8. compute_fisher_score.m
+
+## Purpose
+
+Computes the Fisher score of each feature for a two-class problem. The Fisher score quantifies how well a single feature separates the two classes:
+
+```text
+fisher = (mu1 - mu2)^2 / (var1 + var2)
+```
+
+A higher score means the class means are far apart relative to the within-class spread, i.e. the feature is more discriminative.
+
+## Function call
+
+```matlab
+fisher = compute_fisher_score(F, labels);
+```
+
+## Inputs
+
+| Input | Description |
+|---|---|
+| `F` | Feature matrix `[observations x features]` |
+| `labels` | Class label per observation `[observations x 1]` (exactly two classes) |
+
+## Outputs
+
+| Output | Description |
+|---|---|
+| `fisher` | Fisher score per feature `[1 x features]` |
+
+## Used by
+
+```text
+Lab08 - Feature selection and classification
+```
+
+## Future use
+
+```text
+Lab09 - Classification and control framework
+Assignment 1
+```
+
+---
+
 # Functions provided by the course (Moodle)
 
 The following functions are **not written by the student**. They are provided on Moodle (CNBI processing toolbox) and are stored in `matlab/utils/` only so that they sit on the MATLAB path like the other helpers. They are introduced in Lab07.
 
 ---
 
-# 8. proc_spectrogram.m  (provided)
+# 9. proc_spectrogram.m  (provided)
 
 ## Purpose
 
@@ -455,7 +502,7 @@ Lab07 - ERD/ERS on spectrogram (script 1)
 
 ---
 
-# 9. proc_pos2win.m  (provided)
+# 10. proc_pos2win.m  (provided)
 
 ## Purpose
 
@@ -500,7 +547,7 @@ Lab07 - ERD/ERS on spectrogram (script 1)
 
 ---
 
-# Current pipeline after Lab07
+# Current pipeline after Lab08
 
 The reusable pipeline is now:
 
@@ -528,7 +575,8 @@ load GDF file
 -> convert event POS/DUR to windows (proc_pos2win)
 -> save processed .mat (one per run)
 -> concatenate runs, extract trials and fixation reference
--> ERD/ERS in time-frequency, visualized with imagesc
+-> ERD/ERS in time-frequency, visualized with imagesc (Lab07)
+-> Fisher score per feature -> feature selection -> LDA/QDA decoder + accuracy (Lab08)
 ```
 
 ## Git notes
@@ -555,7 +603,6 @@ light figures
 The next labs will build on this structure:
 
 ```text
-Lab08 - Feature selection and classification
 Lab09 - Classification and control framework
 ```
 
