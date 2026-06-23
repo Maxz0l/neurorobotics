@@ -2,7 +2,7 @@
 
 Neurorobotics 2025/2026
 
-Last updated: after Lab06 - ERD/ERS on band power
+Last updated: after Lab07 - ERD/ERS on spectrogram
 
 ## Purpose of this folder
 
@@ -16,6 +16,7 @@ This folder is progressively updated to build a clean and reusable processing pi
 
 ```text
 matlab/utils/
+│   # student-authored helpers:
 ├── load_gdf_file.m
 ├── concat_gdf_runs.m
 ├── create_label_vectors.m
@@ -23,7 +24,11 @@ matlab/utils/
 ├── compute_bandpower.m        # general band power, optional log
 ├── compute_log_bandpower.m    # backward-compatible wrapper (ApplyLog = true)
 ├── apply_car_filter.m
-└── apply_laplacian_filter.m
+├── apply_laplacian_filter.m
+│
+│   # provided by the course (Moodle), NOT student-authored:
+├── proc_spectrogram.m         # PSD over time (spectrogram)
+└── proc_pos2win.m             # convert sample positions to PSD windows
 ```
 
 ---
@@ -388,7 +393,6 @@ Lab06 - ERD/ERS on band power
 The Laplacian filter is likely to be useful in:
 
 ```text
-Lab07 - ERD/ERS on spectrogram
 Lab08 - Feature selection and classification
 Lab09 - Classification and control framework
 Assignment 1
@@ -396,7 +400,107 @@ Assignment 1
 
 ---
 
-# Current pipeline after Lab06
+# Functions provided by the course (Moodle)
+
+The following functions are **not written by the student**. They are provided on Moodle (CNBI processing toolbox) and are stored in `matlab/utils/` only so that they sit on the MATLAB path like the other helpers. They are introduced in Lab07.
+
+---
+
+# 8. proc_spectrogram.m  (provided)
+
+## Purpose
+
+Computes the Power Spectral Density (PSD) over time (spectrogram) of multi-channel data, using a fast Welch-based method with overlapping windows.
+
+## Function call
+
+```matlab
+[features, f] = proc_spectrogram(data, wlength, wshift, pshift, samplerate, mlength);
+```
+
+## Inputs
+
+| Input | Description |
+|---|---|
+| `data` | Data matrix `[samples x channels]` |
+| `wlength` | Length of the external (outer) window, in seconds |
+| `wshift` | Shift of the external window, in seconds |
+| `pshift` | Shift of the internal PSD windows, in seconds |
+| `samplerate` | Sampling rate in Hz |
+| `mlength` | (optional) Moving-average length in seconds (default 1; `[]` to disable) |
+
+## Outputs
+
+| Output | Description |
+|---|---|
+| `features` | PSD over time `[windows x frequencies x channels]` |
+| `f` | Vector of computed frequencies |
+
+## Lab07 parameters
+
+```matlab
+wlength = 0.5;
+wshift  = 0.0625;
+pshift  = 0.25;
+mlength = 1;
+```
+
+At 512 Hz this gives a 2 Hz frequency grid and one window every 0.0625 s.
+
+## Used by
+
+```text
+Lab07 - ERD/ERS on spectrogram (script 1)
+```
+
+---
+
+# 9. proc_pos2win.m  (provided)
+
+## Purpose
+
+Converts event positions expressed in samples into positions expressed in PSD windows. This is required because `proc_spectrogram` changes the temporal axis from samples to windows.
+
+## Function call
+
+```matlab
+wPOS = proc_pos2win(POS, wshift, direction, wlength);
+```
+
+## Inputs
+
+| Input | Description |
+|---|---|
+| `POS` | Vector of sample positions |
+| `wshift` | Window shift, in **samples** (`wshift_seconds * samplerate`) |
+| `direction` | `'forward'` or `'backward'` |
+| `wlength` | Window length in **samples**, required for `'backward'` |
+
+## Outputs
+
+| Output | Description |
+|---|---|
+| `wPOS` | Positions expressed in windows |
+
+## Important notes
+
+In Lab07 the conversion uses `'backward'`:
+
+```matlab
+EVENT.POS = proc_pos2win(POS, wshift*fs, 'backward', wlength*fs);
+```
+
+The function only converts positions. Durations are converted separately (e.g. `floor(DUR / (wshift*fs))`).
+
+## Used by
+
+```text
+Lab07 - ERD/ERS on spectrogram (script 1)
+```
+
+---
+
+# Current pipeline after Lab07
 
 The reusable pipeline is now:
 
@@ -415,6 +519,16 @@ load GDF file
 -> extract trials and the fixation reference period
 -> average or compare motor imagery classes
 -> compute ERD/ERS relative to the fixation reference (Lab06)
+
+Alternative time-frequency branch (Lab07):
+load GDF file
+-> Laplacian filter
+-> PSD over time (proc_spectrogram)
+-> select frequency subset
+-> convert event POS/DUR to windows (proc_pos2win)
+-> save processed .mat (one per run)
+-> concatenate runs, extract trials and fixation reference
+-> ERD/ERS in time-frequency, visualized with imagesc
 ```
 
 ## Git notes
@@ -441,7 +555,6 @@ light figures
 The next labs will build on this structure:
 
 ```text
-Lab07 - ERD/ERS on spectrogram
 Lab08 - Feature selection and classification
 Lab09 - Classification and control framework
 ```

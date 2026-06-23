@@ -31,4 +31,5 @@ matlab/labs/**/results/*.mat
 .DS_Store
 Thumbs.db
 
-Neurorobotics/
+Neurorobotics Cours/
+.claude/
