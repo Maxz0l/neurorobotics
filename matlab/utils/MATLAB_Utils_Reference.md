@@ -2,7 +2,7 @@
 
 Neurorobotics 2025/2026
 
-Last updated: after Lab08 - Feature selection and classification
+Last updated: after Assignment 1 - MI BCI decoding pipeline
 
 ## Purpose of this folder
 
@@ -26,6 +26,9 @@ matlab/utils/
 ├── apply_car_filter.m
 ├── apply_laplacian_filter.m
 ├── compute_fisher_score.m     # two-class feature discriminability
+├── concat_processed_runs.m    # load + concatenate processed PSD runs
+├── create_window_labels.m     # per-window class/feedback labels + trial list
+├── apply_control_framework.m  # evidence accumulation + per-trial decision
 │
 │   # provided by the course (Moodle), NOT student-authored:
 ├── proc_spectrogram.m         # PSD over time (spectrogram)
@@ -447,13 +450,131 @@ Assignment 1
 
 ---
 
+# 9. concat_processed_runs.m
+
+## Purpose
+
+Loads several processed PSD `.mat` files (produced by the spectrogram processing step) and concatenates them along the window dimension, shifting each run's event positions by the cumulative number of windows already loaded.
+
+## Function call
+
+```matlab
+[PSD, EVENT, runIdx, freqs, samplerate] = concat_processed_runs(matFiles);
+```
+
+## Inputs
+
+| Input | Description |
+|---|---|
+| `matFiles` | Cell array of full paths to processed `.mat` files |
+
+## Outputs
+
+| Output | Description |
+|---|---|
+| `PSD` | Concatenated PSD `[windows x frequencies x channels]` |
+| `EVENT` | Event structure `TYP/POS/DUR` with per-run corrected `POS` |
+| `runIdx` | Run index for each window `[windows x 1]` |
+| `freqs` | Frequency vector (from the first file) |
+| `samplerate` | Sampling rate in Hz (from the first file) |
+
+## Used by
+
+```text
+Assignment 1 - grand_average, train_decoder, evaluate_online, results_summary
+```
+
+It is the window-domain analogue of `concat_gdf_runs.m` (which works on raw samples).
+
+---
+
+# 10. create_window_labels.m
+
+## Purpose
+
+Builds per-window label vectors and a trial list in the PSD window domain. It walks each trial (fixation -> cue -> continuous feedback) and labels the windows accordingly.
+
+## Function call
+
+```matlab
+[Ck, CFbk, trials] = create_window_labels(EVENT, nWin, fixEvent, classes, cfEvent);
+```
+
+## Inputs
+
+| Input | Description |
+|---|---|
+| `EVENT` | Event structure `TYP/POS/DUR` in **window** units |
+| `nWin` | Total number of windows |
+| `fixEvent` | Fixation-cross event code (786) |
+| `classes` | Cue class codes, e.g. `[771 773]` |
+| `cfEvent` | Continuous-feedback event code (781) |
+
+## Outputs
+
+| Output | Description |
+|---|---|
+| `Ck` | Class active during each trial (0 elsewhere) `[nWin x 1]` |
+| `CFbk` | `cfEvent` during the feedback windows (0 elsewhere) `[nWin x 1]` |
+| `trials` | Struct array per trial: `start`, `stop`, `fixStart`, `fixStop`, `cfStart`, `cfStop`, `class` |
+
+## Used by
+
+```text
+Assignment 1 - grand_average, train_decoder, evaluate_online, results_summary
+```
+
+---
+
+# 11. apply_control_framework.m
+
+## Purpose
+
+Applies the exponential evidence-accumulation control framework to the decoder posterior probabilities and makes a per-trial decision when the accumulated evidence crosses a threshold:
+
+```text
+D(t) = alpha * D(t-1) + (1 - alpha) * pp(t)     (reset to 0.5 at each trial start)
+```
+
+## Function call
+
+```matlab
+[predForced, predDecided, timeCmd, D] = apply_control_framework(pp, trials, cfg);
+```
+
+## Inputs
+
+| Input | Description |
+|---|---|
+| `pp` | Posterior probabilities `[nWin x 2]`, `pp(:,1) = P(classes(1))` |
+| `trials` | Trial struct (from `create_window_labels`): needs `cfStart`, `cfStop`, `class` |
+| `cfg` | Config with `control.alpha`, `control.thLow`, `control.thHigh`, `spectro.wshift`, `classes` |
+
+## Outputs
+
+| Output | Description |
+|---|---|
+| `predForced` | Decision for every trial (forced from the final evidence if no crossing) |
+| `predDecided` | Decision, or `NaN` if no threshold was crossed (rejected) |
+| `timeCmd` | Time to deliver the command [s], `NaN` if undecided |
+| `D` | Accumulated evidence `[nWin x 2]` (for plotting) |
+
+## Used by
+
+```text
+Lab09 - Classification and control framework
+Assignment 1 - evaluate_online, results_summary
+```
+
+---
+
 # Functions provided by the course (Moodle)
 
 The following functions are **not written by the student**. They are provided on Moodle (CNBI processing toolbox) and are stored in `matlab/utils/` only so that they sit on the MATLAB path like the other helpers. They are introduced in Lab07.
 
 ---
 
-# 9. proc_spectrogram.m  (provided)
+# 12. proc_spectrogram.m  (provided)
 
 ## Purpose
 
@@ -502,7 +623,7 @@ Lab07 - ERD/ERS on spectrogram (script 1)
 
 ---
 
-# 10. proc_pos2win.m  (provided)
+# 13. proc_pos2win.m  (provided)
 
 ## Purpose
 
@@ -547,7 +668,7 @@ Lab07 - ERD/ERS on spectrogram (script 1)
 
 ---
 
-# Current pipeline after Lab08
+# Current pipeline after Assignment 1
 
 The reusable pipeline is now:
 

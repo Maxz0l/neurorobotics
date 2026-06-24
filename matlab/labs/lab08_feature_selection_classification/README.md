@@ -98,7 +98,7 @@ matlab/labs/lab08_feature_selection_classification/
 ├── README.md
 ├── lab08_feature_selection_classification.m
 └── images/
-    ├── Lab08_Fisher_feature_maps.png
+    ├── Lab08_Fisher_score_feature_maps.png
     ├── Lab08_Classifier_space.png
     └── Lab08_Single_sample_accuracy.png
 
