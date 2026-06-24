@@ -9,6 +9,19 @@ control framework.
 > The full methods, results and discussion are in the **report (PDF)**.
 > This README only explains how to run the code.
 
+## Preview
+
+<p align="center">
+  <img src="figures/grandavg_fisher_map.png" width="330" alt="Population Fisher map">
+  <img src="figures/decoding_evidence_accumulation.png" width="330" alt="Evidence accumulation on one trial">
+</p>
+
+Left: population Fisher map (the most discriminative channel-frequency features).
+Right: evidence accumulation on one trial, where the integrated evidence reaches
+the decision threshold. Example console output of `train_decoder`:
+
+![train_decoder output](figures/feat_col.png)
+
 ## Requirements
 
 - MATLAB with the **Signal Processing** and **Statistics and Machine Learning** toolboxes.
